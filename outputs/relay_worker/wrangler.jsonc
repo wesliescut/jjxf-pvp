@@ -1,0 +1,11 @@
+{
+  // Worker 名字：决定 workers.dev 地址 https://<name>.<子域>.workers.dev
+  // 改了这里，relay_pages/wrangler.jsonc 的 services[0].service 也要一起改。
+  "name": "jjxf-two-player-lobby-2",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-09",
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }]
+}
