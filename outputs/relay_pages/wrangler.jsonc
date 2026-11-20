@@ -1,0 +1,13 @@
+{
+  // Pages 项目名 = 你最终的网址 https://<name>.pages.dev
+  // 必须全 Cloudflare 唯一；只能用小写字母、数字和连字符。公开使用前请改成你自己的名字，
+  // 例如 "jjxf-relay-你的英文名"。
+  "name": "jjxf-relay-demo",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-11-09",
+  "services": [
+    // binding 名必须是 LOBBY：dist/_worker.js 里写死 env.LOBBY.fetch(request)。
+    // service 必须等于 relay_worker/wrangler.jsonc 里的 Worker 名字。
+    { "binding": "LOBBY", "service": "jjxf-two-player-lobby-2" }
+  ]
+}
