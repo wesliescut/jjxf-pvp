@@ -275,17 +275,77 @@ Invoke-WebRequest -Uri "https://你的项目名.pages.dev/" -Method GET
 
 ---
 
-## 八、自己打包
+## 八、自己打包（生成 exe）
+
+仓库根目录的 `JJXF_PVP_Original_Combat.spec` 是 **PyInstaller 的打包配置**，相当于一份“配方”：
+入口程序、要塞进 exe 的素材、产物名字、要不要黑窗口，全都写在里面。
+玩家下载的 exe 就是它产出的，**普通玩家不需要关心这一节**。
+
+### 8.1 最简用法
 
 ```powershell
-python -m PyInstaller --noconfirm --distpath outputs --workpath work\build ^
-    work\JJXF_PVP_Original_Combat_vNN.spec
+python -m PyInstaller --noconfirm JJXF_PVP_Original_Combat.spec
 ```
 
-spec 里 `datas` 会带入 `outputs/runtime_multiplayer` 与 `outputs/assets/launcher`；
-`relay.json` **不要**打进包，放在 exe 旁边即可。
+产物：`dist\JJXF_PVP_Original_Combat.exe`（单文件，双击即用，目标机器不需要装 Python）。
 
----
+想指定输出位置：
+
+```powershell
+python -m PyInstaller --noconfirm --distpath outputs --workpath build JJXF_PVP_Original_Combat.spec
+```
+
+- `--noconfirm`：覆盖已有产物；不加会在覆盖前停下来问；
+- 需要先装 PyInstaller：`pip install pyinstaller`（本项目用 6.12.0 验证通过）。
+
+### 8.2 spec 里各段在干什么
+
+```python
+root = Path(SPECPATH)        # SPECPATH 由 PyInstaller 注入 = spec 所在目录（仓库根）
+
+a = Analysis(
+    [str(root / 'outputs' / 'dual_room_internet_gui.py')],  # 入口程序
+    pathex=[str(root / 'outputs')],                         # import 搜索路径
+    datas=[                                                 # 要打进去的非 Python 文件
+        (… / 'runtime_multiplayer', 'runtime_multiplayer'), # 擂台 GDScript（启动器会拷进隔离档案）
+        (… / 'assets' / 'launcher', 'assets/launcher'),     # 界面头像
+    ],
+)
+
+exe = EXE(
+    pyz, a.scripts, a.binaries, a.datas, [],
+    name='JJXF_PVP_Original_Combat',   # 产物文件名
+    console=False,                     # False = 不弹黑窗口（GUI 程序）
+)
+```
+
+三个必须知道的点：
+
+1. **`datas` 不能漏**：Python 代码会自动收集，但 `.gd` 脚本和 `.png` 头像不是 Python 模块，
+   必须手动列进去，否则打出来的 exe 里没有擂台脚本，进游戏会失败；
+2. **没有 `COLLECT` 段 = 单文件模式**：exe 启动时会把内容解压到 `%TEMP%\_MEIxxxx`，
+   所以启动比普通程序慢一点点；也正因如此，`relay.json` 这种可写配置**要放在 exe 旁边**，
+   不能打进包里（打进包会随 exe 每次解压重置）；
+3. **`console=False`**：双击不弹黑框。代价是崩溃时看不到报错——
+   排查启动问题时把它临时改成 `True` 重新打包，就能看到 traceback。
+
+### 8.3 常见改动
+
+| 想做什么 | 改哪里 |
+|---|---|
+| 换 exe 名字 | `EXE(...)` 里的 `name='...'` |
+| 往包里加文件 | `datas` 加一行 `(源路径, '包内目录')` |
+| 排查启动崩溃 | `console=False` → `True` |
+| 加程序图标 | `EXE(...)` 加 `icon='app.ico'` |
+| 加版本信息 | `EXE(...)` 加 `version='version.txt'` |
+| 精简体积 | `Analysis(..., excludes=['numpy', 'PIL'])` |
+
+### 8.4 注意
+
+- **必须在仓库根目录执行**：`root = Path(SPECPATH)` 依赖 spec 的位置，换目录会找不到 `outputs\...`；
+- 每次打包会生成 `build\`（中间产物，可删）和 `dist\`（产物），两者都已写进 `.gitignore`；
+- 平时只改代码的话，**spec 不用动**，重新执行一次打包命令即可；
+- `relay.json` 永远不进包、不进仓库。
 
 ## 九、已知限制
 
