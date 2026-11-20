@@ -1,0 +1,26 @@
+# 中继地址只放本地，绝不入库
+relay.json
+
+# 构建产物
+build/
+dist/
+*.exe
+*.pyc
+__pycache__/
+
+# Cloudflare / wrangler 本地状态
+.wrangler/
+node_modules/
+
+# 日志与临时文件
+*.log
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak5
+
+# 不要提交游戏本体、扩展包、导出的原版脚本
+outputs/assets/game/
+work/_canonical/
+work/_ext/
